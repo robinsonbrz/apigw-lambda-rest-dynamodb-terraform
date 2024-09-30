@@ -113,33 +113,56 @@ def create_movie(table, event):
         }
 
 def update_movie(table, event):
-    print("\n\nPut method received\n\n")
-    movie_id = event.get('pathParameters', {}).get('id')
+    query_parameters = event.get('queryStringParameters')
+    movie_id = query_parameters.get('movie_id') if query_parameters else None
+
     if not movie_id:
         return {
             "statusCode": 400,
-            "body": json.dumps({"error": "Missing 'id' parameter in path"})
+            "body": json.dumps({"error": "Missing 'movie_id' parameter in query string"})
         }
 
-    item = json.loads(event["body"])
     try:
-        dynamodb_client.put_item(
+        # Get the update fields from the request body
+        update_fields = json.loads(event.get("body", "{}"))
+
+        # Construct the update expression
+        update_expression = "SET "
+        expression_attribute_values = {}
+        expression_attribute_names = {}
+
+        for key, value in update_fields.items():
+            # Handle reserved keywords (like 'year')
+            expression_attribute_names[f"#{key}"] = key
+            
+            update_expression += f"#{key} = :{key}, "
+            
+            if key == "year":
+                expression_attribute_values[f":{key}"] = {"N": str(value)}  # Ensure it is a number
+            else:
+                expression_attribute_values[f":{key}"] = {"S": str(value)} if isinstance(value, str) else {"N": str(value)}
+
+        # Remove the trailing comma and space
+        update_expression = update_expression[:-2]
+
+        # Perform the update
+        dynamodb_client.update_item(
             TableName=table,
-            Item={
-                "id": {"S": movie_id},
-                "year": {'N': str(item.get("year", ""))},
-                "title": {'S': item.get("title", "")}
-            }
+            Key={'id': {'S': movie_id}},  # Ensure the key matches the type defined in your table
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names
         )
+
         return {
             "statusCode": 200,
-            "body": json.dumps({"message": f"Movie with id {movie_id} updated successfully"})
+            "body": json.dumps({"message": "Movie updated successfully"})
         }
     except Exception as e:
         logging.error(f"Error updating movie: {str(e)}")
         return {
             "statusCode": 500,
-            "body": json.dumps({"error": f"Failed to update movie: {e}"})
+            "body": json.dumps({"error": f"Failed to update movie: {str(e)}"})
         }
 
 
@@ -204,8 +227,8 @@ def partially_update_movie(table, event):
 def delete_movie(table, event):
     print("\n\nDelete method received\n\n")
     query_parameters = event.get('queryStringParameters')
-    if query_parameters and 'id' in query_parameters:
-        movie_id = query_parameters['id']
+    if query_parameters and 'movie_id' in query_parameters:
+        movie_id = query_parameters['movie_id']
         dynamodb_client.delete_item(
             TableName=table,
             Key={'id': {'S': movie_id}}

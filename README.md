@@ -62,29 +62,13 @@ curl -X POST '<seu endpoint da API HTTP>'/movies \
  -d '{"year":1977, "title":"Starwars"}' 
 ```
 
-# saída de exemplo
-```
-{
-  "message": "Successfully inserted data!"
-}
-```
 
-## Teste Delete
-```
-curl -X DELETE '<your_api_endpoint>/movies?year=2012'
-```
+GET: Recupera movies por ID.
 
+Todos Movies: GET /movies
 
+Por ID: GET /movies/{id}
 
-
-
-
-
-Instructions for Using the Methods
-GET: Retrieve all movies or a specific movie by ID.
-
-All Movies: GET /movies
-By ID: GET /movies/{id}
 POST: Create a new movie.
 
 Endpoint: POST /movies
@@ -126,7 +110,13 @@ Body: (only include fields you want to update)
 ```
 DELETE: Delete a movie by ID.
 
-Endpoint: DELETE /movies?id={id}
+
+
+```
+curl -X DELETE '<your_api_endpoint>/movies?movie_id={id}'
+```
+
+
 
 HEAD: Check if a movie exists by ID.
 
