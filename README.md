@@ -74,6 +74,93 @@ curl -X POST '<seu endpoint da API HTTP>'/movies \
 curl -X DELETE '<your_api_endpoint>/movies?year=2012'
 ```
 
+
+
+
+
+
+
+Instructions for Using the Methods
+GET: Retrieve all movies or a specific movie by ID.
+
+All Movies: GET /movies
+By ID: GET /movies/{id}
+POST: Create a new movie.
+
+Endpoint: POST /movies
+Body:
+```json
+
+{
+  "year": "1982",
+  "title": "Some Movie Title"
+}
+```
+
+PUT: Update an existing movie by ID.
+
+Endpoint: PUT /movies/{id}
+Body:
+```json
+
+{
+  "year": "1983",
+  "title": "Updated Movie Title"
+}
+```
+
+PATCH: Partially update an existing movie by ID.
+
+Endpoint: PATCH /movies?movie_id={id}
+Body: (only include fields you want to update)
+```json
+{
+  "title": "New Title"
+}
+
+# or 
+{   
+    "title": "Updated Movie Title"
+} 
+
+```
+DELETE: Delete a movie by ID.
+
+Endpoint: DELETE /movies?id={id}
+
+HEAD: Check if a movie exists by ID.
+
+Endpoint: HEAD /movies?id={id}
+OPTIONS: Get the allowed HTTP methods for the resource.
+
+Endpoint: OPTIONS /movies
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Limpeza
 1. Altere o diretório para o diretório do padrão:
     ```
