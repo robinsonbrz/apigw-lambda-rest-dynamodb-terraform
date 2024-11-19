@@ -47,7 +47,8 @@ resource "aws_iam_policy" "lambda_exec_role" {
           "sqs:GetQueueUrl",
           "sqs:SendMessage",
           "sqs:ReceiveMessage",
-          "sqs:DeleteMessage"
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
         ],
         Resource = "arn:aws:sqs:*:*:rob_fila_sqs.fifo"
       }

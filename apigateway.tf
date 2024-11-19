@@ -39,7 +39,7 @@ resource "aws_apigatewayv2_integration" "apigw_lambda" {
 # Use a wildcard route to catch all HTTP methods
 resource "aws_apigatewayv2_route" "catch_all" {
   api_id    = aws_apigatewayv2_api.http_lambda.id
-  route_key = "ANY /movies" # ANY matches all HTTP methods
+  route_key = "ANY /movies/{id}" # ANY matches all HTTP methods
   target    = "integrations/${aws_apigatewayv2_integration.apigw_lambda.id}"
 }
 

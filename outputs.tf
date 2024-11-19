@@ -16,3 +16,15 @@ output "apigwy_log_group" {
 output "queue_url" {
   value = aws_sqs_queue.rob_fila_sqs.url
 }
+
+# output "sqs_trigger_status" {
+#   value = aws_lambda_event_source_mapping.sqs_trigger.state
+# }
+
+# output "sqs_arn" {
+#   value = aws_sqs_queue.rob_fila_sqs.arn
+# }
+
+# output "lambda_name" {
+#   value = aws_lambda_function.apigw_lambda_ddb.function_name
+# }
