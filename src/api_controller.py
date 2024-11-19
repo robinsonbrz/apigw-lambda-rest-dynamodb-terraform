@@ -41,12 +41,9 @@ def handle_api_gateway_event(event):
     elif http_method == "HEAD":
         return check_movie_exists(table, event)
 
-    elif http_method == "OPTIONS":
-        return options_response()
-
     else:
         return {
-            "statusCode": 405,  # Method Not Allowed
+            "statusCode": 405,
             "body": json.dumps({"error": "Method not supported"}),
         }
 
@@ -268,10 +265,11 @@ def delete_movie(table, event):
 
 def check_movie_exists(table, event):
     # Retrieve query parameters
-    query_parameters = event.get("queryStringParameters")
-    movie_id = query_parameters.get("movie_id") if query_parameters else None
+    logging.info(f"HEAD Event received api_controller.py: {json.dumps(event)}")
 
-    if not movie_id:
+    if event.get("pathParameters") is not None:
+        movie_id = event["pathParameters"]["id"]
+    else:
         return {
             "statusCode": 400,
             "body": json.dumps({"error": "Missing 'movie_id' parameter in query"}),
@@ -298,16 +296,6 @@ def check_movie_exists(table, event):
             "statusCode": 500,
             "body": json.dumps({"error": f"Failed to check existence: {str(e)}"}),
         }
-
-
-def options_response():
-    return {
-        "statusCode": 200,
-        "headers": {"Allow": "GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS"},
-        "body": json.dumps(
-            {"message": "Allowed methods: GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS"}
-        ),
-    }
 
 
 def generate_id():
