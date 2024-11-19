@@ -19,71 +19,20 @@ terraform {
 
 provider "aws" {
   profile = "default"
-  region = var.aws_region
+  region  = var.aws_region
 }
 
 resource "random_string" "random" {
-  length           = 4
-  special          = false
+  length  = 4
+  special = false
 }
 
-# resource "aws_dynamodb_table" "movie_table" {
-#   name           = var.dynamodb_table
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = 20
-#   write_capacity = 20
-#   hash_key       = "year"
-#   range_key      = "title"
-
-#   attribute {
-#     name = "year"
-#     type = "N"
-#   }
-  
-#   attribute {
-#     name = "title"
-#     type = "S"
-#   }
-
-# }
-
-# resource "aws_dynamodb_table" "movie_table" {
-#   name           = var.dynamodb_table
-#   billing_mode   = "PROVISIONED"
-#   read_capacity  = 20
-#   write_capacity = 20
-#   hash_key       = "id"  
-#   range_key      = "year"
-
-#   attribute {
-#     name = "id"
-#     type = "S"  # String type for UUID/hash
-#   }
-  
-#   attribute {
-#     name = "year"
-#     type = "N"  # Numeric type for year
-#   }
-
-#   attribute {
-#     name = "title"
-#     type = "S"  # String type for title
-#   }
-
-#   global_secondary_index {
-#     name            = "TitleIndex"  # Name of the GSI
-#     hash_key        = "title"       # Index the title
-#     projection_type = "ALL"
-#     read_capacity   = 10
-#     write_capacity  = 10
-#   }
-# }
 resource "aws_dynamodb_table" "movie_table" {
   name           = var.dynamodb_table
   billing_mode   = "PROVISIONED"
   read_capacity  = 20
   write_capacity = 20
-  hash_key       = "id"  # Only 'id' as the primary key
+  hash_key       = "id" # Only 'id' as the primary key
 
   attribute {
     name = "id"
@@ -116,6 +65,23 @@ resource "aws_dynamodb_table" "movie_table" {
     write_capacity  = 10
   }
 }
+
+#========================================================================
+// sqs setup
+#========================================================================
+
+
+resource "aws_sqs_queue" "rob_fila_sqs" {
+  name                       = "rob_fila_sqs.fifo"
+  fifo_queue                 = true
+  delay_seconds              = 0
+  visibility_timeout_seconds = 30
+  max_message_size           = 2048
+  message_retention_seconds  = 86400
+  receive_wait_time_seconds  = 2
+  sqs_managed_sse_enabled    = true
+}
+
 
 
 #========================================================================
@@ -153,7 +119,7 @@ resource "aws_s3_object" "this" {
 //Define lambda function
 resource "aws_lambda_function" "apigw_lambda_ddb" {
   function_name = "${var.lambda_name}-${random_string.random.id}"
-  description = "serverlessland pattern"
+  description   = "serverlessland pattern"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
   s3_key    = aws_s3_object.this.key
@@ -164,16 +130,17 @@ resource "aws_lambda_function" "apigw_lambda_ddb" {
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   role = aws_iam_role.lambda_exec.arn
-  
+
   environment {
     variables = {
       DDB_TABLE = var.dynamodb_table
     }
   }
   depends_on = [aws_cloudwatch_log_group.lambda_logs]
-  
+
 }
 
+# CloudWatch
 resource "aws_cloudwatch_log_group" "lambda_logs" {
   name = "/aws/lambda/${var.lambda_name}-${random_string.random.id}"
 
@@ -200,33 +167,42 @@ resource "aws_iam_role" "lambda_exec" {
 resource "aws_iam_policy" "lambda_exec_role" {
   name = "lambda-tf-pattern-ddb-post"
 
-  policy = <<POLICY
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "dynamodb:GetItem",
-                "dynamodb:PutItem",
-                "dynamodb:UpdateItem",
-                "dynamodb:DeleteItem",
-                "dynamodb:Scan" 
-            ],
-            "Resource": "arn:aws:dynamodb:*:*:table/${var.dynamodb_table}"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
-            ],
-            "Resource": "*"
-        }
+  
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Scan"
+        ],
+        Resource = "arn:aws:dynamodb:*:*:table/${var.dynamodb_table}"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "sqs:GetQueueUrl",
+          "sqs:SendMessage",
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage"
+        ],
+        Resource = "arn:aws:sqs:*:*:rob_fila_sqs.fifo"
+      }
     ]
-}
-POLICY
+  })
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_policy" {
@@ -287,19 +263,17 @@ resource "aws_apigatewayv2_stage" "default" {
 
 
 resource "aws_apigatewayv2_integration" "apigw_lambda" {
-  api_id = aws_apigatewayv2_api.http_lambda.id
-  integration_uri    = aws_lambda_function.apigw_lambda_ddb.invoke_arn
-  integration_type   = "AWS_PROXY"
+  api_id           = aws_apigatewayv2_api.http_lambda.id
+  integration_uri  = aws_lambda_function.apigw_lambda_ddb.invoke_arn
+  integration_type = "AWS_PROXY"
 }
 
 # Use a wildcard route to catch all HTTP methods
 resource "aws_apigatewayv2_route" "catch_all" {
-  api_id = aws_apigatewayv2_api.http_lambda.id
-  route_key = "ANY /movies"  # ANY matches all HTTP methods
+  api_id    = aws_apigatewayv2_api.http_lambda.id
+  route_key = "ANY /movies" # ANY matches all HTTP methods
   target    = "integrations/${aws_apigatewayv2_integration.apigw_lambda.id}"
 }
-
-
 
 resource "aws_cloudwatch_log_group" "api_gw" {
   name = "/aws/api_gw/${var.apigw_name}-${random_string.random.id}"
@@ -315,3 +289,51 @@ resource "aws_lambda_permission" "api_gw" {
 
   source_arn = "${aws_apigatewayv2_api.http_lambda.execution_arn}/*/*"
 }
+
+
+# # resource "aws_iam_role" "lambda_execution_role" {
+# #   name               = "lambda_execution_role"
+# #   assume_role_policy = jsonencode({
+# #     Version = "2012-10-17"
+# #     Statement = [
+# #       {
+# #         Action    = "sts:AssumeRole"
+# #         Effect    = "Allow"
+# #         Principal = {
+# #           Service = "lambda.amazonaws.com"
+# #         }
+# #       }
+# #     ]
+# #   })
+# # }
+
+# # resource "aws_iam_policy" "lambda_sqs_policy" {
+# #   name        = "lambda_sqs_policy"
+# #   description = "Policy to allow Lambda to interact with SQS"
+
+# #   policy = jsonencode({
+# #     Version = "2012-10-17"
+# #     Statement = [
+# #       {
+# #         Action = [
+# #           "sqs:GetQueueUrl",
+# #           "sqs:SendMessage",
+# #           "sqs:ReceiveMessage",
+# #           "sqs:DeleteMessage"
+# #         ]
+# #         Effect   = "Allow"
+# #         Resource = "arn:aws:sqs:${var.region}:${data.aws_caller_identity.current.account_id}:rob_fila_sqs.fifo"
+# #       }
+# #     ]
+# #   })
+# # }
+
+# # resource "aws_iam_role_policy_attachment" "lambda_sqs_policy_attachment" {
+# #   role       = aws_iam_role.lambda_execution_role.name
+# #   policy_arn = aws_iam_policy.lambda_sqs_policy.arn
+# # }
+
+# # resource "aws_lambda_function" "apigw_lambda_ddb" {
+# #   function_name = "apigw_lambda_ddb"
+# #   # Other Lambda function configurations...
+# # }

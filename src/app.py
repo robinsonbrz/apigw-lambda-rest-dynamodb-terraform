@@ -3,6 +3,7 @@ import os
 import json
 import logging
 import uuid
+from send import SqsManager
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -101,6 +102,21 @@ def create_movie(table, event):
                 "title": {'S': title}
             }
         )
+        four_digits =str(uuid.uuid4())[0:4]
+        sqs = SqsManager('rob_fila_sqs.fifo')
+        message_attributes={
+            'year': {
+                'StringValue': f'{year}',
+                'DataType': 'String'
+            },
+            'title': {
+                'StringValue': f'{title}',
+                'DataType': 'String'
+            }
+        }
+
+        sqs.send_message(f'Hello, {four_digits}', 'group1', message_attributes)
+
         return {
             "statusCode": 201,
             "headers": {"Content-Type": "application/json"},

@@ -17,3 +17,7 @@ output "apigwy_log_group" {
 
   value = aws_cloudwatch_log_group.api_gw.id
 }
+
+output "queue_url" {
+  value = aws_sqs_queue.rob_fila_sqs.url
+}
