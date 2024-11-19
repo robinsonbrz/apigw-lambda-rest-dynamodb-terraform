@@ -26,11 +26,11 @@ Esta aplicação utiliza vários serviços da AWS e existem custos associados a 
 Instruções de Implantação
 1. Crie um novo diretório, navegue até esse diretório em um terminal e clone o repositório GitHub:
     ``` 
-    git clone 
+    git clone https://github.com/robinsonbrz/apigw-lambda-rest-dynamodb-terraform.git
     ```
 2. Altere o diretório para o diretório do padrão:
     ```
-    cd apigw-lambda-dynamodb-terraform
+    cd apigw-lambda-rest-dynamodb-terraform
     ```
 3. Na linha de comando, inicialize o Terraform para baixar e instalar os provedores definidos na configuração:
     ```
@@ -69,7 +69,7 @@ Todos Movies: GET /movies
 
 Por ID: GET /movies/{id}
 
-POST: Create a new movie.
+POST: Cria um filme. E posta uma mensagem AWS SQS.
 
 Endpoint: POST /movies
 Body:
