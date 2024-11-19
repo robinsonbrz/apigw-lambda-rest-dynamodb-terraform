@@ -43,6 +43,12 @@ resource "aws_apigatewayv2_route" "catch_all" {
   target    = "integrations/${aws_apigatewayv2_integration.apigw_lambda.id}"
 }
 
+resource "aws_apigatewayv2_route" "movie_route" {
+  api_id    = aws_apigatewayv2_api.http_lambda.id
+  route_key = "ANY /movies"  # Route for /movies
+  target    = "integrations/${aws_apigatewayv2_integration.apigw_lambda.id}"
+}
+
 resource "aws_lambda_permission" "api_gw" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
