@@ -1,3 +1,4 @@
+import datetime
 import boto3
 import os
 import json
@@ -94,12 +95,15 @@ def create_movie(table, event):
         item = json.loads(event["body"])
         year = str(item["year"])
         title = str(item["title"])
+        created_at = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         dynamodb_client.put_item(
             TableName=table,
             Item={
                 "id": {"S": generate_id()},
                 "year": {'N': year},
-                "title": {'S': title}
+                "title": {'S': title},
+                "created_at": {'S': f'{created_at}'}
             }
         )
         four_digits =str(uuid.uuid4())[0:4]
@@ -111,6 +115,10 @@ def create_movie(table, event):
             },
             'title': {
                 'StringValue': f'{title}',
+                'DataType': 'String'
+            },
+            'created_at': {
+                'StringValue': f'{created_at}',
                 'DataType': 'String'
             }
         }
