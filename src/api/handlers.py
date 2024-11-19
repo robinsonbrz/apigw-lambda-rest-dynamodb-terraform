@@ -1,51 +1,17 @@
 import datetime
 import json
 import logging
-import os
 import uuid
 
-import boto3
+from boto3 import client
 
-from send import SqsManager
+from api.utils import generate_id
+from sqs.manager import SqsManager
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-dynamodb_client = boto3.client("dynamodb")
-
-
-def handle_api_gateway_event(event):
-    table = os.environ.get("DDB_TABLE")
-    http_method = event.get("httpMethod")
-    logging.info(f"Event received api_controller.py: {json.dumps(event)}")
-
-    if http_method == "GET":
-        if event.get("pathParameters") is not None:
-            movie_id = event["pathParameters"]["id"]
-            return get_movie_by_id(table, movie_id)
-        else:
-            return get_all_movies(table)
-
-    elif http_method == "POST":
-        return create_movie(table, event)
-
-    elif http_method == "PUT":
-        return update_movie(table, event)
-
-    elif http_method == "PATCH":
-        return partially_update_movie(table, event)
-
-    elif http_method == "DELETE":
-        return delete_movie(table, event)
-
-    elif http_method == "HEAD":
-        return check_movie_exists(table, event)
-
-    else:
-        return {
-            "statusCode": 405,
-            "body": json.dumps({"error": "Method not supported"}),
-        }
+dynamodb_client = client("dynamodb")
 
 
 def get_all_movies(table):
@@ -296,7 +262,3 @@ def check_movie_exists(table, event):
             "statusCode": 500,
             "body": json.dumps({"error": f"Failed to check existence: {str(e)}"}),
         }
-
-
-def generate_id():
-    return str(uuid.uuid4())

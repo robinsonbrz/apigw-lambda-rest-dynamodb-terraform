@@ -1,7 +1,6 @@
 import logging
-from consumer_sqs import process_sqs_message
-from api_controller import handle_api_gateway_event
-
+from sqs.manager import process_sqs_message  # Assume you move SQS logic here
+from api.controller import handle_api_gateway_event  # Updated import path
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

@@ -1,6 +1,7 @@
+import logging
 import boto3
 import uuid
-
+import json
 
 class SqsManager:
     def __init__(self, queue_name):
@@ -25,4 +26,8 @@ class SqsManager:
         print(response.get('MessageId'))
         print(response.get('MD5OfMessageBody'))
         return response.get('MessageId')
-    
+
+def process_sqs_message(event):
+    logging.info(f"Event received consummer: {json.dumps(event)}")
+    for record in event.get("Records", []):
+        logging.info(f"Record received consummer: {json.dumps(record)}")

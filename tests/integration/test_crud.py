@@ -38,7 +38,7 @@ def test_put_request(api_request, first_movie_id):
 def test_delete_request(api_request, first_movie_id):
     endpoint = "/movies"
     response = api_request("delete", endpoint, movie_id=first_movie_id)
-    assert response.status_code == 200
+    assert response.status_code == 204
 
 
 def test_head_request_correct_movie_should_return_200(api_request, first_movie_id):
