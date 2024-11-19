@@ -249,7 +249,7 @@ def delete_movie(table, event):
         movie_id = event["pathParameters"]["id"]
         dynamodb_client.delete_item(TableName=table, Key={"id": {"S": movie_id}})
         return {
-            "statusCode": 200,
+            "statusCode": 204,
             "body": json.dumps(
                 {
                     "message": f"Movie with id {movie_id} deleted successfully, or nonexistent."
