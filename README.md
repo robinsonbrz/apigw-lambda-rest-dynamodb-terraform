@@ -32,7 +32,9 @@ Instruções de Implantação
     ```
     cd apigw-lambda-rest-dynamodb-terraform
     ```
-3. Na linha de comando, inicialize o Terraform para baixar e instalar os provedores definidos na configuração:
+3. ```cd infrastructure```
+
+    3.1 Na linha de comando, inicialize o Terraform para baixar e instalar os provedores definidos na configuração:
     ```
     terraform init
     ```
@@ -93,7 +95,7 @@ Body:
 }
 ```
 
-PATCH: Partially update an existing movie by ID.
+PATCH: Update parcial movie por ID.
 
 Endpoint: PATCH /movies?movie_id={id}
 Body: (only include fields you want to update)
@@ -102,13 +104,13 @@ Body: (only include fields you want to update)
   "title": "New Title"
 }
 
-# or 
+# ou 
 {   
     "title": "Updated Movie Title"
 } 
 
 ```
-DELETE: Delete a movie by ID.
+DELETE: Delete movie por ID.
 
 
 
@@ -123,7 +125,7 @@ HEAD: Check if a movie exists by ID.
 Endpoint: HEAD /movies?id={id}
 OPTIONS: Get the allowed HTTP methods for the resource.
 
-Endpoint: OPTIONS /movies
+
 
 
 
