@@ -71,18 +71,24 @@ def create_movie(table, event):
         four_digits = str(uuid.uuid4())[0:4]
         sqs = SqsManager("rob_fila_sqs.fifo")
         message_attributes = {
+            "movie_id": {"StringValue": f"{movie_id}", "DataType": "String"},
             "year": {"StringValue": f"{year}", "DataType": "String"},
             "title": {"StringValue": f"{title}", "DataType": "String"},
             "created_at": {"StringValue": f"{created_at}", "DataType": "String"},
-            "movie_id": {"StringValue": f"{movie_id}", "DataType": "String"},
         }
 
         sqs.send_message(f"Hello, {four_digits}", "group1", message_attributes)
 
+        resp_body={
+            "id": movie_id,
+            "year": year,
+            "title": title,
+            "created_at": created_at
+        }
         return {
             "statusCode": 201,
             "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({"message": "Successfully inserted data!"}),
+            "body": json.dumps(resp_body),
         }
     else:
         return {"statusCode": 400, "body": json.dumps({"error": "Invalid input"})}

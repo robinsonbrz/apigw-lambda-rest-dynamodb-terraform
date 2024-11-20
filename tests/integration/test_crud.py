@@ -37,6 +37,10 @@ def test_put_request(api_request, first_movie_id):
 
 def test_delete_request(api_request, first_movie_id):
     endpoint = "/movies"
+    body = {"title": "Inception", "year": 2010}
+    response = api_request("post", endpoint, body=body)
+
+
     response = api_request("delete", endpoint, movie_id=first_movie_id)
     assert response.status_code == 204
 
