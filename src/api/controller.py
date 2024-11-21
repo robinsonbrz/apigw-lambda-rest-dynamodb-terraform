@@ -32,11 +32,9 @@ def handle_api_gateway_event(event):
     http_method = event.get("httpMethod")
     logger.info(f"Event received in controller.py: {event}")
 
-    # Fetch the handler dynamically
     handler_mapping = get_handler_mapping()
     handler = handler_mapping.get(http_method, handle_not_supported)
 
-    # Call the appropriate handler
     return handler(event, table)
 
 

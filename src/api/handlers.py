@@ -106,10 +106,7 @@ def update_movie(table, event):
         }
 
     try:
-        # Get the update fields from the request body
         update_fields = json.loads(event.get("body", "{}"))
-
-        # Construct the update expression
         update_expression = "SET "
         expression_attribute_values = {}
         expression_attribute_names = {}
