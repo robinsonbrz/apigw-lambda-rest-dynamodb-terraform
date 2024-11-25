@@ -11,7 +11,7 @@ resource "aws_sqs_queue" "rob_fila_sqs" {
 
 resource "aws_lambda_event_source_mapping" "sqs_trigger" {
   event_source_arn = aws_sqs_queue.rob_fila_sqs.arn
-  function_name    = aws_lambda_function.apigw_lambda_ddb.function_name
+  function_name    = aws_lambda_function.consumer_lambda.function_name
   batch_size       = 10
   enabled          = true
 }

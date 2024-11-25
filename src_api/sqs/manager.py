@@ -13,7 +13,7 @@ class SqsManager:
         if item is not None:
             message_attributes = {
                 key: {"StringValue": f"{item[key]}", "DataType": "String"}
-                for key in item.keys()  # Iterate over all keys in the item dictionary
+                for key in item.keys()
             }
         else:
             message_attributes = {}
@@ -34,6 +34,6 @@ class SqsManager:
         return response.get('MessageId')
 
 def process_sqs_message(event):
-    logging.info(f"Sqs Sqs Event received consummer: {json.dumps(event)}")
+    logging.info(f"Sqs Sqs Event received consumer: {json.dumps(event)}")
     for record in event.get("Records", []):
-        logging.info(f"Sqs Sqs Record received consummer: {json.dumps(record)}")
+        logging.info(f"Sqs Sqs Record received consumer: {json.dumps(record)}")

@@ -55,7 +55,6 @@ class MovieService:
                 },
             )
 
-            # Send to SQS
             sqs = SqsManager("rob_fila_sqs.fifo")
             message_attributes = {
                 "year": {"StringValue": year, "DataType": "String"},

@@ -7,7 +7,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-@pytest.fixture(scope="session")
+# Load environment variables before each test run
+@pytest.fixture(scope="function", autouse=True)
+def load_env():
+    load_dotenv()
+
+
+@pytest.fixture(scope="function")
 def base_url():
     url = os.getenv("BASE_URL", "http://localhost")
     return f"{url}"

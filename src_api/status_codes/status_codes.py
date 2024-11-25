@@ -26,6 +26,4 @@ class StatusCodeHandler:
             response["body"] = json.dumps({"error": "Unauthorized"})
         elif status_code == 403:
             response["body"] = json.dumps({"error": "Forbidden"})
-
-
         return response

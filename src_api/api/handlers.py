@@ -55,11 +55,13 @@ def create_movie(table, event):
             "year": item["year"],
             "title": item["title"],
             "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "approved_date": "-",
+            "approved": False,
         }
-
         table.put_item(
             Item=item_body,
         )
+
         sqs = SqsManager("rob_fila_sqs.fifo")
         sqs.send_message(f"Hello, {item_body['id']}", "group1", item_body)
 
@@ -84,7 +86,6 @@ def update_movie(table, event):
         expression_attribute_names = {}
 
         for key, value in update_fields.items():
-            # Handle reserved keywords (like 'year')
             expression_attribute_names[f"#{key}"] = key
 
             update_expression += f"#{key} = :{key}, "
@@ -92,21 +93,19 @@ def update_movie(table, event):
             if key == "year":
                 expression_attribute_values[f":{key}"] = {
                     "N": str(value)
-                }  # Ensure it is a number
+                }
             else:
                 expression_attribute_values[f":{key}"] = (
                     {"S": str(value)} if isinstance(value, str) else {"N": str(value)}
                 )
 
-        # Remove the trailing comma and space
         update_expression = update_expression[:-2]
 
-        # Perform the update
         dynamodb_client.update_item(
             TableName=table,
             Key={
                 "id": {"S": movie_id}
-            },  # Ensure the key matches the type defined in your table
+            },
             UpdateExpression=update_expression,
             ExpressionAttributeValues=expression_attribute_values,
             ExpressionAttributeNames=expression_attribute_names,
@@ -130,35 +129,30 @@ def partially_update_movie(table, event):
         )
 
     try:
-        # Get the update fields from the request body
+
         update_fields = json.loads(event.get("body", "{}"))
 
-        # Construct the update expression
         update_expression = "SET "
         expression_attribute_values = {}
         expression_attribute_names = {}
 
         for key, value in update_fields.items():
-            # Use a placeholder for reserved keywords
             expression_attribute_names[f"#{key}"] = key
 
             update_expression += f"#{key} = :{key}, "
 
             if key == "year":
-                # Ensure 'year' is treated as a number for the update
                 expression_attribute_values[f":{key}"] = {
                     "N": str(value)
-                }  # Convert string to number
+                } 
             else:
-                # For other fields, check type to decide if it's string or number
+
                 expression_attribute_values[f":{key}"] = (
                     {"S": str(value)} if isinstance(value, str) else {"N": str(value)}
                 )
 
-        # Remove the trailing comma and space
         update_expression = update_expression[:-2]
 
-        # Perform the update
         dynamodb_client.update_item(
             TableName=table,
             Key={"id": {"S": movie_id}},

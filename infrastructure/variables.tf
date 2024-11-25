@@ -19,7 +19,7 @@ variable "dynamodb_table" {
 variable "lambda_name" {
   description = "Name of the Lambda function"
   type        = string
-  default     = "pattern-movies-post"
+  default     = "movies"
 }
 
 variable "apigw_name" {
