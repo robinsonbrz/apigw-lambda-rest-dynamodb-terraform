@@ -3,10 +3,11 @@ import json
 import logging
 
 from boto3 import client, resource
-
-from api.utils import Utils
+from repositories.movie_repository import get_movie_obj_by_id
 from sqs.manager import SqsManager
 from status_codes.status_codes import StatusCodeHandler
+
+from api.utils import Utils
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -28,6 +29,7 @@ def get_all_movies(table):
     except Exception as e:
         logging.error(f"Error fetching movies: {str(e)}")
         return StatusCodeHandler.create_response(500)
+
 
 def get_movie_by_id(table, movie_id):
     try:
@@ -55,15 +57,12 @@ def create_movie(table, event):
             "year": item["year"],
             "title": item["title"],
             "created_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "approval_status": "pending",
             "approved_date": "-",
-            "approved": False,
         }
         table.put_item(
             Item=item_body,
         )
-
-        sqs = SqsManager("rob_fila_sqs.fifo")
-        sqs.send_message(f"Hello, {item_body['id']}", "group1", item_body)
 
         return StatusCodeHandler.create_response(201, body=item_body)
 
@@ -72,12 +71,16 @@ def create_movie(table, event):
 
 
 def update_movie(table, event):
+
     if event.get("pathParameters") is not None:
         movie_id = event["pathParameters"]["id"]
     else:
         return StatusCodeHandler.create_response(
             400, "Missing 'movie_id' parameter in path string"
         )
+
+    movie = get_movie_obj_by_id(table, event["pathParameters"]["id"])
+    approval_before = movie["approval_status"]
 
     try:
         update_fields = json.loads(event.get("body", "{}"))
@@ -91,9 +94,7 @@ def update_movie(table, event):
             update_expression += f"#{key} = :{key}, "
 
             if key == "year":
-                expression_attribute_values[f":{key}"] = {
-                    "N": str(value)
-                }
+                expression_attribute_values[f":{key}"] = {"N": str(value)}
             else:
                 expression_attribute_values[f":{key}"] = (
                     {"S": str(value)} if isinstance(value, str) else {"N": str(value)}
@@ -103,13 +104,16 @@ def update_movie(table, event):
 
         dynamodb_client.update_item(
             TableName=table,
-            Key={
-                "id": {"S": movie_id}
-            },
+            Key={"id": {"S": movie_id}},
             UpdateExpression=update_expression,
             ExpressionAttributeValues=expression_attribute_values,
             ExpressionAttributeNames=expression_attribute_names,
         )
+        movie = get_movie_obj_by_id(table, movie_id)
+
+        if approval_before == "pending" and movie["approval_status"] == "approved":
+            sqs = SqsManager("rob_fila_sqs.fifo")
+            sqs.send_message(f"Movie approved, {movie['id']}", "group1", item=movie)
 
         return {
             "statusCode": 200,
@@ -128,8 +132,10 @@ def partially_update_movie(table, event):
             400, "Missing 'movie_id' parameter in path string"
         )
 
-    try:
+    movie = get_movie_obj_by_id(table, event["pathParameters"]["id"])
+    approval_before = movie["approval_status"]
 
+    try:
         update_fields = json.loads(event.get("body", "{}"))
 
         update_expression = "SET "
@@ -142,11 +148,8 @@ def partially_update_movie(table, event):
             update_expression += f"#{key} = :{key}, "
 
             if key == "year":
-                expression_attribute_values[f":{key}"] = {
-                    "N": str(value)
-                } 
+                expression_attribute_values[f":{key}"] = {"N": str(value)}
             else:
-
                 expression_attribute_values[f":{key}"] = (
                     {"S": str(value)} if isinstance(value, str) else {"N": str(value)}
                 )
@@ -160,6 +163,12 @@ def partially_update_movie(table, event):
             ExpressionAttributeValues=expression_attribute_values,
             ExpressionAttributeNames=expression_attribute_names,
         )
+
+        movie = get_movie_obj_by_id(table, movie_id)
+
+        if approval_before == "pending" and movie["approval_status"] == "approved":
+            sqs = SqsManager("rob_fila_sqs.fifo")
+            sqs.send_message(f"Movie approved, {movie['id']}", "group1", item=movie)
 
         return {
             "statusCode": 200,

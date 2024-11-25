@@ -11,10 +11,9 @@ class SqsManager:
 
     def send_message(self, message, message_group=None, item=None):
         if item is not None:
-            message_attributes = {
-                key: {"StringValue": f"{item[key]}", "DataType": "String"}
-                for key in item.keys()
-            }
+            message_attributes = {}
+            for key in item.keys():
+                message_attributes[key] = {"StringValue": f"{item[key]}", "DataType": "String"}
         else:
             message_attributes = {}
 

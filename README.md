@@ -1,11 +1,45 @@
 # Amazon API Gateway para AWS Lambda e Amazon DynamoDB com Terraform
 
-Este projeto extende o template inicial de [Serverless Land Patterns](https://serverlessland.com/patterns/apigw-lambda-dynamodb-terraform).
+Uma **Lambda function** controla eventos da **AWS ApiGateway** processando um CRUD Movie.
 
-O projeto inicial utilizava apenas o método POST
+```json
+{
+    "id":"c5b9d146-6cbc-4353-9f47-c6210c561b6d",
+    "year":"2010",
+    "title":"Inception",
+    "created_at":"2024-11-25 03:09:28",
+    "approval_status":"approved",	
+    "approved_date":"2024-11-25 03:10:49"
+}
+```
+
+Ao criar um Movie com o método POST, o approval_status padrão do Movie é "pending".
+
+Ao atualizarmos o approval_status para "approved" com o método PATCH ou PUT, uma mensagem Sqs é disparada. A mensagem **Sqs** é disparada caso o **"approval_status"** anterior seja **"pending"**, e a atualização solicite **"approved"**.
+
+Uma segunda **Lambda function** é encarregada de receber essas mensagens **Sqs**, e atualiza o banco de dados **DynamoDb** com o novo estado do Movie para **"approval_status": "approved"**, e também registra o **"approved_date" : "2024-11-25 03:10:49"**.
 
 
-Importante:
+### Método PATCH 
+
+```json
+{
+"approval_status": "approved"
+}
+```
+
+### Método PUT
+
+```json
+{
+    "year": 1993,
+    "title": "Batman",
+    "approval_status": "approved"
+}
+```
+
+**Importante:**
+
 Esta aplicação utiliza vários serviços da AWS e existem custos associados a esses serviços após o uso da Camada Gratuita - consulte a  [AWS Pricing page](https://aws.amazon.com/pricing/)  para obter detalhes. Você é responsável por quaisquer custos incorridos na AWS. Nenhuma garantia está implícita neste exemplo.
 
 

@@ -13,11 +13,11 @@ class Utils:
         resp = {}
         if item_valor is not None:
             for k, v in item_valor.items():
-                logging.error(f"k,v: {k}, {v}")
                 if v.get("S"):
                     resp[k]=v.get("S")
+                elif "BOOL" in v:
+                    resp[k] = v["BOOL"]
                 elif v.get("N"):
                     resp[k]=v.get("N")
-                elif v.get("B"):
-                    resp[k]=v.get("B")
+
         return resp

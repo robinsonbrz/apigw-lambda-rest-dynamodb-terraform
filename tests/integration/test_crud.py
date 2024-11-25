@@ -38,6 +38,15 @@ def test_put_request(api_request, first_movie_id):
     assert response.status_code == 200
     print(response.request.body)
 
+def test_put_request_approving_movie(api_request, first_movie_id):
+    endpoint = "/movies"
+    body = {"title": "Inception", "year": 2010, "approval_status": "approved"}
+    response = api_request("put", endpoint, movie_id=first_movie_id, body=body)
+    assert response.status_code == 200
+    print(response.request.body)
+
+    
+
 
 def test_delete_request(api_request, first_movie_id):
     endpoint = "/movies"
